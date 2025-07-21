@@ -78,7 +78,7 @@ class KeepassxcDatabase:
             else:
                 raise KeepassxcFileNotFoundError()
         if keyfilepath != self.keyfilepath:
-            self.keyfilepath = path
+            self.keyfilepath = keyfilepath
             self.keyfilepath_checked = False
 
         if not self.keyfilepath_checked:
@@ -123,7 +123,7 @@ class KeepassxcDatabase:
         save the passphrase if successful
         """
         self.passphrase = passphrase
-        err, _ = self.run_cli("ls", "-q", self.path, "--key-file", self.keyfile)
+        err, _ = self.run_cli("ls", "-q", self.path, "--key-file", self.keyfilepath)
         if err:
             self.passphrase = None
             return False
@@ -136,7 +136,7 @@ class KeepassxcDatabase:
         if self.is_passphrase_needed():
             raise KeepassxcLockedDbError()
 
-        (err, out) = self.run_cli("search", "-q", self.path, "--key-file", self.keyfile, query)
+        (err, out) = self.run_cli("search", "-q", self.path, "--key-file", self.keyfilepath, query)
         if err:
             if "No results for that" in err:
                 return []
@@ -156,6 +156,7 @@ class KeepassxcDatabase:
         - Password
         - URL
         - Notes
+        - TOTP
 
         :param entry: full name of the entry, without the leading '/'
         :returns: dict of entry attributes and their values
@@ -165,10 +166,18 @@ class KeepassxcDatabase:
 
         attrs = dict()
         for attr in ["UserName", "Password", "URL", "Notes"]:
-            (err, out) = self.run_cli("show", "-q", "-a", attr, self.path, "--key-file", self.keyfile, f"/{entry}")
+            (err, out) = self.run_cli("show", "-q", "-a", attr, self.path, "--key-file", self.keyfilepath, f"/{entry}")
             if err:
                 raise KeepassxcCliError(err)
             attrs[attr] = out.strip("\n")
+        # TOTP is a special case, it is not an attribute of the entry,
+        # but rather a command that needs to be run
+        (err, out) = self.run_cli("show", "-q", "-t", self.path, "--key-file", self.keyfilepath, f"/{entry}")
+        if err:
+            if not "ERROR: unknown attribute TOTP." in err:
+                raise KeepassxcCliError(err)
+        else:
+            attrs["TOTP"] = out.strip("\n")
         return attrs
 
     def can_execute_cli(self) -> bool:

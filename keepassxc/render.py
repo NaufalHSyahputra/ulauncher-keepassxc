@@ -156,6 +156,7 @@ def active_entry(details: Dict[str, str]) -> BaseAction:
     attrs = [
         ("Password", "password"),
         ("UserName", "username"),
+        ("TOTP", "totp"),
         ("URL", "URL"),
         ("Notes", "notes"),
     ]
