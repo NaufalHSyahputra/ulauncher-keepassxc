@@ -82,6 +82,12 @@ class KeepassxcExtension(Extension):
         """
         return os.path.expanduser(self.preferences["database-path"])
 
+    def get_keyfile_path(self) -> str:
+        """
+        Normalized and expanded path to the keyfile file
+        """
+        return os.path.expanduser(self.preferences["keyfile-path"])        
+
     def get_max_result_items(self) -> int:
         """
         Maximum number of search results to show on screen

@@ -45,12 +45,14 @@ class KeepassxcDatabase:
         self.cli = "keepassxc-cli"
         self.cli_checked = False
         self.path = None
+        self.keyfilepath = None
         self.path_checked = False
+        self.keyfilepath_checked = False
         self.passphrase = None
         self.passphrase_expires_at = None
         self.inactivity_lock_timeout = 0
 
-    def initialize(self, path: str, inactivity_lock_timeout: int) -> None:
+    def initialize(self, path: str, keyfilepath: str, inactivity_lock_timeout: int) -> None:
         """
         Check that
         - we can call invoke the CLI
@@ -75,6 +77,16 @@ class KeepassxcDatabase:
                 self.path_checked = True
             else:
                 raise KeepassxcFileNotFoundError()
+        if keyfilepath != self.keyfilepath:
+            self.keyfilepath = path
+            self.keyfilepath_checked = False
+
+        if not self.keyfilepath_checked:
+            if os.path.exists(self.keyfilepath):
+                self.keyfilepath_checked = True
+            else:
+                raise KeepassxcFileNotFoundError()
+
 
     def change_path(self, new_path: str) -> None:
         """
@@ -111,7 +123,7 @@ class KeepassxcDatabase:
         save the passphrase if successful
         """
         self.passphrase = passphrase
-        err, _ = self.run_cli("ls", "-q", self.path)
+        err, _ = self.run_cli("ls", "-q", self.path, "--key-file", self.keyfile)
         if err:
             self.passphrase = None
             return False
@@ -124,7 +136,7 @@ class KeepassxcDatabase:
         if self.is_passphrase_needed():
             raise KeepassxcLockedDbError()
 
-        (err, out) = self.run_cli("locate", "-q", self.path, query)
+        (err, out) = self.run_cli("search", "-q", self.path, "--key-file", self.keyfile, query)
         if err:
             if "No results for that" in err:
                 return []
@@ -153,7 +165,7 @@ class KeepassxcDatabase:
 
         attrs = dict()
         for attr in ["UserName", "Password", "URL", "Notes"]:
-            (err, out) = self.run_cli("show", "-q", "-a", attr, self.path, f"/{entry}")
+            (err, out) = self.run_cli("show", "-q", "-a", attr, self.path, "--key-file", self.keyfile, f"/{entry}")
             if err:
                 raise KeepassxcCliError(err)
             attrs[attr] = out.strip("\n")

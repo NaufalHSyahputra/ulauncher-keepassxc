@@ -22,6 +22,12 @@
       "default_value": "~/passwords.kdbx"
     },
     {
+      "id": "keyfile-path",
+      "type": "input",
+      "name": "Keyfile database location",
+      "default_value": "~/keyfile"
+    },    
+    {
       "id": "max-results",
       "type": "input",
       "name": "Maximum number of search results to display",
