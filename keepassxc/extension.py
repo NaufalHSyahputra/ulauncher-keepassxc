@@ -170,7 +170,7 @@ class KeywordQueryEventListener(EventListener):
     def on_event(self, event, extension) -> BaseAction:
         try:
             self.keepassxc_db.initialize(
-                extension.get_db_path(), extension.get_inactivity_lock_timeout()
+                extension.get_db_path(), extension.get_keyfile_path(), extension.get_inactivity_lock_timeout()
             )
 
             if self.keepassxc_db.is_passphrase_needed():
