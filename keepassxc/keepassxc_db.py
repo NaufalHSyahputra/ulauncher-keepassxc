@@ -174,7 +174,7 @@ class KeepassxcDatabase:
         # but rather a command that needs to be run
         (err, out) = self.run_cli("show", "-q", "-t", self.path, "--key-file", self.keyfilepath, f"/{entry}")
         if err:
-            if not "ERROR: unknown attribute TOTP." in err:
+            if not "has no TOTP set up." in err:
                 raise KeepassxcCliError(err)
         else:
             attrs["TOTP"] = out.strip("\n")
