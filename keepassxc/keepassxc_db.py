@@ -31,7 +31,7 @@ class KeepassxcLockedDbError(Exception):
 
 
 class KeepassxcCliError(Exception):
-    """ Contains error message returned by keepassxc-cli """
+    """Contains error message returned by keepassxc-cli"""
 
     def __init__(self, message):
         super(KeepassxcCliError, self).__init__()
@@ -39,7 +39,7 @@ class KeepassxcCliError(Exception):
 
 
 class KeepassxcDatabase:
-    """ Wrapper around keepassxc-cli """
+    """Wrapper around keepassxc-cli"""
 
     def __init__(self):
         self.cli = "keepassxc-cli"
@@ -52,7 +52,9 @@ class KeepassxcDatabase:
         self.passphrase_expires_at = None
         self.inactivity_lock_timeout = 0
 
-    def initialize(self, path: str, keyfilepath: str, inactivity_lock_timeout: int) -> None:
+    def initialize(
+        self, path: str, keyfilepath: str, inactivity_lock_timeout: int
+    ) -> None:
         """
         Check that
         - we can call invoke the CLI
@@ -86,7 +88,6 @@ class KeepassxcDatabase:
                 self.keyfilepath_checked = True
             else:
                 raise KeepassxcFileNotFoundError()
-
 
     def change_path(self, new_path: str) -> None:
         """
@@ -123,7 +124,7 @@ class KeepassxcDatabase:
         save the passphrase if successful
         """
         self.passphrase = passphrase
-        err, _ = self.run_cli("ls", "-q", self.path, "--key-file", self.keyfilepath)
+        err, _ = self.run_cli("ls", "-q", self.path)
         if err:
             self.passphrase = None
             return False
@@ -136,7 +137,7 @@ class KeepassxcDatabase:
         if self.is_passphrase_needed():
             raise KeepassxcLockedDbError()
 
-        (err, out) = self.run_cli("search", "-q", self.path, "--key-file", self.keyfilepath, query)
+        (err, out) = self.run_cli("search", "-q", self.path, query)
         if err:
             if "No results for that" in err:
                 return []
@@ -165,19 +166,32 @@ class KeepassxcDatabase:
             raise KeepassxcLockedDbError()
 
         attrs = dict()
-        for attr in ["UserName", "Password", "URL", "Notes"]:
-            (err, out) = self.run_cli("show", "-q", "-a", attr, self.path, "--key-file", self.keyfilepath, f"/{entry}")
-            if err:
-                raise KeepassxcCliError(err)
-            attrs[attr] = out.strip("\n")
-        # TOTP is a special case, it is not an attribute of the entry,
-        # but rather a command that needs to be run
-        (err, out) = self.run_cli("show", "-q", "-t", self.path, "--key-file", self.keyfilepath, f"/{entry}")
+        hasOtp = False
+        (err, out) = self.run_cli("show", "-q", "--all", self.path, f"/{entry}")
         if err:
-            if not "has no TOTP set up." in err:
-                raise KeepassxcCliError(err)
-        else:
-            attrs["TOTP"] = out.strip("\n")
+            raise KeepassxcCliError(err)
+
+        for l in out.splitlines():
+            if not ": " in l.strip("\n"):
+                continue
+            (attr, value) = l.strip("\n").split(": ")
+            if attr in ["UserName", "Password", "Notes", "URL"]:
+                attrs[attr.strip(" ")] = value.strip(" ")
+                continue
+            if attr.strip(" ") == "otp":
+                hasOtp = True
+                continue
+
+        if hasOtp:
+            # attrs[attr] = out.strip("\n")
+            # TOTP is a special case, it is not an attribute of the entry,
+            # but rather a command that needs to be run
+            (err, out) = self.run_cli("show", "-q", "-t", self.path, f"/{entry}")
+            if err:
+                if not "has no TOTP set up." in err:
+                    raise KeepassxcCliError(err)
+            else:
+                attrs["TOTP"] = out.strip("\n")
         return attrs
 
     def can_execute_cli(self) -> bool:
@@ -196,9 +210,14 @@ class KeepassxcDatabase:
         """
         Execute the KeePassXC CLI with given args, parse output and handle errors
         """
+        args_list = list(args)
         try:
+            path_index = args_list.index(self.path)
+            if self.keyfilepath_checked:
+                args_list.insert(path_index + 1, "--key-file")
+                args_list.insert(path_index + 2, self.keyfilepath)
             proc = subprocess.run(
-                [self.cli, *args],
+                [self.cli, *args_list],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 input=bytes(self.passphrase, "utf-8"),

@@ -181,9 +181,19 @@ def active_entry(details: Dict[str, str]) -> BaseAction:
 
             if attr == "Password":
                 items.append(
-                    ExtensionSmallResultItem(
+                    ExtensionResultItem(
                         icon="images/copy.svg",
-                        name="Copy password to the clipboard",
+                        name="Password: ••••••••",
+                        description="Copy Password to the clipboard",
+                        on_enter=action,
+                    )
+                )
+            elif attr == "TOTP":
+                items.append(
+                    ExtensionResultItem(
+                        icon="images/copy.svg",
+                        name="TOTP: ••••",
+                        description="Copy TOTP to the clipboard",
                         on_enter=action,
                     )
                 )
