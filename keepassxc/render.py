@@ -206,8 +206,18 @@ def active_entry(details: Dict[str, str]) -> BaseAction:
                 items.append(
                     ExtensionResultItem(
                         icon="images/copy.svg",
-                        name="{}: ••••••••".format(attr[5:]),
+                        name="{}: ••••••••".format(attr[5:].capitalize()),
                         description="Copy {} to the clipboard".format(attr[5:]),
+                        on_enter=action,
+                    )
+                )
+            elif attr.startswith("KPL_"):
+                # KPL_ is a special case, it is a unprotected attribute
+                items.append(
+                    ExtensionResultItem(
+                        icon="images/copy.svg",
+                        name="{}: {}".format(attr[4:].capitalize(), val),
+                        description="Copy {} to the clipboard".format(attr[4:]),
                         on_enter=action,
                     )
                 )
