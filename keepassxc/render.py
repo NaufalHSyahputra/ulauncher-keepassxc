@@ -199,6 +199,18 @@ def active_entry(details: Dict[str, str]) -> BaseAction:
                         on_enter=action,
                     )
                 )
+            elif attr.startswith("KPLP_"):
+                # KPLP_ is a special case, it is a protected attribute
+                # and should not be shown in the UI, but we still want to allow
+                # copying it to the clipboard
+                items.append(
+                    ExtensionResultItem(
+                        icon="images/copy.svg",
+                        name="{}: ••••••••".format(attr[5:]),
+                        description="Copy {} to the clipboard".format(attr[5:]),
+                        on_enter=action,
+                    )
+                )
             else:
                 items.append(
                     ExtensionResultItem(

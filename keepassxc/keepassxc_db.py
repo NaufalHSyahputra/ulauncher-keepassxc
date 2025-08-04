@@ -180,7 +180,7 @@ class KeepassxcDatabase:
                 attrs[attr.strip(" ")] = value.strip(" ")
                 continue
             # elif attr contains KPL_
-            elif attr.startswith("KPL_"):
+            elif attr.startswith("KPL_") or attr.startswith("KPLP_"):
                 keys.append(attr.strip(" "))
                 attrs[attr.strip(" ")] = value.strip(" ")
                 continue
