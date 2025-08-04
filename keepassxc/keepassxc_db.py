@@ -167,7 +167,7 @@ class KeepassxcDatabase:
 
         attrs = dict()
         hasOtp = False
-        (err, out) = self.run_cli("show", "-q", "--all", self.path, f"/{entry}")
+        (err, out) = self.run_cli("show", "-q", "--show-protected", "--all", self.path, f"/{entry}")
         if err:
             raise KeepassxcCliError(err)
 
@@ -178,6 +178,11 @@ class KeepassxcDatabase:
             if attr in ["UserName", "Password", "Notes", "URL"]:
                 attrs[attr.strip(" ")] = value.strip(" ")
                 continue
+            # elif attr contains KPL_
+            elif attr.startswith("KPL_"):
+                attrs[attr.strip(" ")] = value.strip(" ")
+                continue
+            # TOTP is a special case, it is not an attribute of the entry,
             if attr.strip(" ") == "otp":
                 hasOtp = True
                 continue
