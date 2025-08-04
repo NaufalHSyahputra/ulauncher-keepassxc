@@ -166,6 +166,7 @@ class KeepassxcDatabase:
             raise KeepassxcLockedDbError()
 
         attrs = dict()
+        keys = ["UserName", "Password", "Notes", "URL"]
         hasOtp = False
         (err, out) = self.run_cli("show", "-q", "--show-protected", "--all", self.path, f"/{entry}")
         if err:
@@ -175,15 +176,17 @@ class KeepassxcDatabase:
             if not ": " in l.strip("\n"):
                 continue
             (attr, value) = l.strip("\n").split(": ")
-            if attr in ["UserName", "Password", "Notes", "URL"]:
+            if attr in keys:
                 attrs[attr.strip(" ")] = value.strip(" ")
                 continue
             # elif attr contains KPL_
             elif attr.startswith("KPL_"):
+                keys.append(attr.strip(" "))
                 attrs[attr.strip(" ")] = value.strip(" ")
                 continue
             # TOTP is a special case, it is not an attribute of the entry,
             if attr.strip(" ") == "otp":
+                keys.append("TOTP")
                 hasOtp = True
                 continue
 

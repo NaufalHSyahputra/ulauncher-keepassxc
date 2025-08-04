@@ -160,8 +160,10 @@ def active_entry(details: Dict[str, str]) -> BaseAction:
         ("URL", "URL"),
         ("Notes", "notes"),
     ]
+    # Get all keys from details dict
+    keys = details.keys()
     items = []
-    for attr, attr_nice in attrs:
+    for attr in keys:
         val = details.get(attr, "")
         if val:
             action = ActionList(
@@ -171,7 +173,7 @@ def active_entry(details: Dict[str, str]) -> BaseAction:
                         {
                             "action": "show_notification",
                             "summary": "{} copied to the clipboard.".format(
-                                attr_nice.capitalize()
+                                attr.capitalize()
                             ),
                         }
                     ),
@@ -201,8 +203,8 @@ def active_entry(details: Dict[str, str]) -> BaseAction:
                 items.append(
                     ExtensionResultItem(
                         icon="images/copy.svg",
-                        name="{}: {}".format(attr_nice.capitalize(), val),
-                        description="Copy {} to the clipboard".format(attr_nice),
+                        name="{}: {}".format(attr.capitalize(), val),
+                        description="Copy {} to the clipboard".format(attr),
                         on_enter=action,
                     )
                 )
